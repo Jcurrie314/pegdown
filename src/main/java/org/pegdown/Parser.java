@@ -47,7 +47,7 @@ import static org.parboiled.common.StringUtils.repeat;
  */
 @SuppressWarnings( {"InfiniteRecursion"})
 public class Parser extends BaseParser<Object> implements Extensions {
-    
+
     protected static final char CROSSED_OUT = '\uffff';
 
     public interface ParseRunnerProvider {
@@ -148,7 +148,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         return NodeSequence(
                 OneOrMore(
                         ZeroOrMore(BlankLine(), line.append("\n")),
-                        Indent(), push(currentIndex()), 
+                        Indent(), push(currentIndex()),
                         OneOrMore(
                                 FirstOf(
                                         Sequence('\t', line.append(repeat(' ', 4-(currentIndex()-1-(Integer)peek())%4))),
@@ -161,7 +161,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 push(new VerbatimNode(text.getString()))
         );
     }
-    
+
     public Rule FencedCodeBlock() {
         StringBuilderVar text = new StringBuilderVar();
         Var<Integer> markerLength = new Var<Integer>();
@@ -188,7 +188,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 Newline()
         );
     }
-    
+
     public Rule HorizontalRule() {
         return NodeSequence(
                 NonindentSpace(),
@@ -283,7 +283,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     }
 
     //************** Definition Lists ************
-    
+
     public Rule DefinitionList() {
         return NodeSequence(
                 // test for successful definition list match before actually building it to reduce backtracking
@@ -304,7 +304,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 )
         );
     }
-    
+
     public Rule DefListTerm() {
         return NodeSequence(
                 TestNot(Spacechar()),
@@ -315,7 +315,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 Newline()
         );
     }
-    
+
     public Rule DefTermInline() {
         return Sequence(
                 NotNewline(),
@@ -323,7 +323,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 Inline()
         );
     }
-    
+
     public Rule Definition() {
         SuperNodeCreator itemNodeCreator = new SuperNodeCreator() {
             public SuperNode create(Node child) {
@@ -332,7 +332,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         };
         return ListItem(DefListBullet(), itemNodeCreator);
     }
-    
+
     public Rule DefListBullet() {
         return Sequence(NonindentSpace(), AnyOf(":~"), OneOrMore(Spacechar()));
     }
@@ -403,11 +403,11 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 setListItemIndices()
         );
     }
-    
+
     public Rule CrossedOut(Rule rule, StringBuilderVar block) {
         return Sequence(rule, appendCrossed(block));
     }
-    
+
     public Rule DoubleIndentedBlocks(StringBuilderVar block) {
         StringBuilderVar line = new StringBuilderVar();
         return Sequence(
@@ -419,7 +419,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 )
         );
     }
-    
+
     public Rule IndentedBlock(StringBuilderVar block) {
         return Sequence(
                 Line(block),
@@ -432,7 +432,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 )
         );
     }
-    
+
     public Rule NotItem() {
         return TestNot(
                 FirstOf(new ArrayBuilder<Rule>()
@@ -442,7 +442,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 )
         );
     }
-    
+
     public Rule Enumerator() {
         return Sequence(NonindentSpace(), OneOrMore(Digit()), '.', OneOrMore(Spacechar()));
     }
@@ -450,7 +450,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule Bullet() {
         return Sequence(TestNot(HorizontalRule()), NonindentSpace(), AnyOf("+*-"), OneOrMore(Spacechar()));
     }
-    
+
     //************* LIST ITEM ACTIONS ****************
 
     boolean appendCrossed(StringBuilderVar block) {
@@ -467,7 +467,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         block.clearContents();
         return withIndicesShifted(innerRoot, (Integer) context.getValueStack().pop());
     }
-    
+
     Node withIndicesShifted(Node node, int delta) {
         ((AbstractNode) node).shiftIndices(delta);
         for (Node subNode : node.getChildren()) {
@@ -492,7 +492,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         item.getChildren().set(0, paraNode);
         return true;
     }
-    
+
     boolean setListItemIndices() {
         SuperNode listItem = (SuperNode) getContext().getValueStack().peek();
         List<Node> children = listItem.getChildren();
@@ -583,7 +583,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 Sequence(Endline(), Test(Inline()))
         );
     }
-    
+
     @MemoMismatches
     public Rule Inline() {
         return Sequence(
@@ -653,7 +653,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule CharLine(char c) {
         return FirstOf(NOrMore(c, 4), Sequence(Spacechar(), OneOrMore(c), Test(Spacechar())));
     }
-    
+
     public Rule StrongOrEmph() {
         return Sequence(
                 Test(AnyOf("*_")),
@@ -677,24 +677,24 @@ public class Parser extends BaseParser<Object> implements Extensions {
     }
 
     @Cached
-    public Rule EmphOrStrong(String chars) {    
+    public Rule EmphOrStrong(String chars) {
         return Sequence(
                 Test(mayEnterEmphOrStrong(chars)),
                 EmphOrStrongOpen(chars),
-                push(new StrongEmphSuperNode(chars)),                
+                push(new StrongEmphSuperNode(chars)),
                 OneOrMore(
                  TestNot(EmphOrStrongClose(chars)),
                  Inline(),
                  FirstOf(
                   Sequence(
-                   //if current inline ends with a closing char for a current strong node: 
+                   //if current inline ends with a closing char for a current strong node:
                    Test(isStrongCloseCharStolen( chars )),
                    //and composes a valid strong close:
                    chars.substring(0, 1),
                    //which is not followed by another closing char (e.g. in __strong _nestedemph___):
                    TestNot(chars.substring(0, 1)),
                    //degrade current inline emph to unclosed and mark current strong node for closing
-                   stealBackStrongCloseChar() 
+                   stealBackStrongCloseChar()
                   ),
                   addAsChild()
                  )
@@ -703,7 +703,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         );
 
     }
-    
+
     public Rule EmphOrStrongOpen(String chars) {
         return Sequence(
                 TestNot(CharLine(chars.charAt(0))),
@@ -726,16 +726,16 @@ public class Parser extends BaseParser<Object> implements Extensions {
                   TestNot(Spacechar()),
                   NotNewline(),
                   chars,
-                  FirstOf((chars.length()==2),TestNot(Alphanumeric()))                
+                  FirstOf((chars.length()==2),TestNot(Alphanumeric()))
                 )
                )
         );
-    
+
     }
-    
+
     /**
      * This method checks if the parser can enter an emph or strong sequence
-     * Emph only allows Strong as direct child, Strong only allows Emph as 
+     * Emph only allows Strong as direct child, Strong only allows Emph as
      * direct child.
      */
     protected boolean mayEnterEmphOrStrong(String chars){
@@ -743,16 +743,16 @@ public class Parser extends BaseParser<Object> implements Extensions {
             return false;
         }
 
-        Object parent = peek(2);        
+        Object parent = peek(2);
         boolean isStrong = ( chars.length()==2 );
-        
+
         if( StrongEmphSuperNode.class.equals( parent.getClass() ) ){
             if( ((StrongEmphSuperNode) parent).isStrong() == isStrong )
                 return false;
         }
         return true;
     }
-    
+
     /**
      * This method checks if current position is a legal start position for a
      * strong or emph sequence by checking the last parsed character(-sequence).
@@ -770,16 +770,16 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
             if(supernode.getChildren().size() < 1 )
                 return true;
-            
+
             lastItem = supernode.getChildren().get( supernode.getChildren().size()-1 );
             lastClass = lastItem.getClass();
         }
-                
+
         return     ( TextNode.class.equals(lastClass) && ( (TextNode) lastItem).getText().endsWith(" ") )
                 || ( SimpleNode.class.equals(lastClass) )
                 || ( java.lang.Integer.class.equals(lastClass) );
     }
-    
+
     /**
      * Mark the current StrongEmphSuperNode as closed sequence
      */
@@ -788,9 +788,9 @@ public class Parser extends BaseParser<Object> implements Extensions {
         node.setClosed(true);
         return true;
     }
-    
+
     /**
-     * This method checks if current parent is a strong parent based on param `chars`. If so, it checks if the 
+     * This method checks if current parent is a strong parent based on param `chars`. If so, it checks if the
      * latest inline node to be added as child does not end with a closing character of the parent. When this
      * is true, a next test should check if the closing character(s) of the child should become (part of) the
      * closing character(s) of the parent.
@@ -800,7 +800,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
             return false;
 
         Object childClass = peek().getClass();
-        
+
         //checks if last `inline` to be added as child is not a StrongEmphSuperNode
         //that eats up a closing character for the parent StrongEmphSuperNode
         if( StrongEmphSuperNode.class.equals( childClass ) ){
@@ -813,14 +813,14 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 return true;
             }
         }
-        
+
         return false;
     }
 
     /**
      * Steals the last close char by marking a previously closed emph/strong node as unclosed.
      */
-    protected boolean stealBackStrongCloseChar(){        
+    protected boolean stealBackStrongCloseChar(){
         StrongEmphSuperNode child = (StrongEmphSuperNode) peek();
         child.setClosed(false);
         addAsChild();
@@ -828,7 +828,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         push(new ValidEmphOrStrongCloseNode());
         return true;
     }
-    
+
     /**
      * This method checks if the last parsed character or sequence is a valid prefix for a closing char for
      * an emph or strong sequence.
@@ -837,23 +837,23 @@ public class Parser extends BaseParser<Object> implements Extensions {
         Object lastItem = peek();
         if ( StrongEmphSuperNode.class.equals( lastItem.getClass() ) ){
             List<Node> children = ((StrongEmphSuperNode) lastItem).getChildren();
-        
+
             if(children.size() < 1)
                 return true;
 
             lastItem = children.get( children.size()-1 );
             Class<?> lastClass = lastItem.getClass();
-            
+
             if( TextNode.class.equals(lastClass) )
                 return !((TextNode) lastItem).getText().endsWith(" ");
 
             if( SimpleNode.class.equals(lastClass) )
                 return !((SimpleNode) lastItem).getType().equals(SimpleNode.Type.Linebreak);
-            
+
         }
         return true;
     }
-    
+
 
     //************* LINKS ****************
 
@@ -1002,7 +1002,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 ']'
         );
     }
-    
+
     public Rule Reference() {
         Var<ReferenceNode> ref = new Var<ReferenceNode>();
         return NodeSequence(
@@ -1212,7 +1212,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule NotNewline() {
         return TestNot(AnyOf("\n\r"));
     }
-    
+
     public Rule Newline() {
         return FirstOf('\n', Sequence('\r', Optional('\n')));
     }
@@ -1263,27 +1263,19 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule Table() {
         Var<TableNode> node = new Var<TableNode>();
-        return NodeSequence(
-                push(node.setAndGet(new TableNode())),
-                Optional(
-                        NodeSequence(
-                                TableRow(), push(1, new TableHeaderNode()) && addAsChild(),
-                                ZeroOrMore(TableRow(), addAsChild())
-                        ),
-                        addAsChild() // add the TableHeaderNode to the TableNode
-                ),
-                TableDivider(node),
-                Optional(
-                        NodeSequence(
-                                TableRow(), push(1, new TableBodyNode()) && addAsChild(),
-                                ZeroOrMore(TableRow(), addAsChild())
-                        ),
-                        addAsChild() // add the TableHeaderNode to the TableNode
-                ),
-                // only accept as table if we have at least one header or at least one body
-                Optional(TableCaption(), addAsChild()),
-                !node.get().getChildren().isEmpty()
-
+		return NodeSequence(
+				push(node.setAndGet(new TableNode())),
+				Optional(
+						NodeSequence(TableRow(node), push(1, new TableHeaderNode()) && addAsChild(),
+								ZeroOrMore(TableRow(node), addAsChild())), addAsChild() // add the TableHeaderNode to the TableNode
+				),
+				TableDivider(node),
+				Optional(
+						NodeSequence(TableRow(node), push(1, new TableBodyNode()) && addAsChild(),
+								ZeroOrMore(TableRow(node), addAsChild())), addAsChild() // add the TableHeaderNode to the TableNode
+				),
+				// only accept as table if we have at least one header or at least one body
+				Optional(TableCaption(), addAsChild()), !node.get().getChildren().isEmpty()
         );
     }
     public Rule TableCaption() {
@@ -1334,31 +1326,25 @@ public class Parser extends BaseParser<Object> implements Extensions {
         );
     }
 
-    public Rule TableRow() {
-        Var<Boolean> leadingPipe = new Var<Boolean>(Boolean.FALSE);
-        return NodeSequence(
-                push(new TableRowNode()),
-                Optional('|', leadingPipe.set(Boolean.TRUE)),
-                OneOrMore(TableCell(), addAsChild()),
-                leadingPipe.get() || ((Node) peek()).getChildren().size() > 1 ||
-                        getContext().getInputBuffer().charAt(matchEnd() - 1) == '|',
-                Sp(), Newline()
-        );
-    }
+    public Rule TableRow(Var<TableNode> tableNode)
+	{
+		Var<Boolean> leadingPipe = new Var<Boolean>(Boolean.FALSE);
+		return NodeSequence(push(new TableRowNode()), Optional('|', leadingPipe.set(Boolean.TRUE)),
+				OneOrMore(TableCell(tableNode), addAsChild()), leadingPipe.get() || ((Node) peek()).getChildren().size() > 1
+						|| getContext().getInputBuffer().charAt(matchEnd() - 1) == '|', Sp(), Newline());
+	}
 
-    public Rule TableCell() {
-        return NodeSequence(
-                push(new TableCellNode()),
-                TestNot(Sp(), Optional(':'), Sp(), OneOrMore('-'), Sp(), Optional(':'), Sp(), FirstOf('|', Newline())),
-                Optional(Sp(), TestNot('|'), NotNewline()),
-                OneOrMore(
-                        TestNot('|'), TestNot(Sp(), Newline()), Inline(),
-                        addAsChild(),
-                        Optional(Sp(), Test('|'), Test(Newline()))
-                ),
-                ZeroOrMore('|'), ((TableCellNode) peek()).setColSpan(Math.max(1, matchLength()))
-        );
-    }
+    public Rule TableCell(Var<TableNode> tableNode)
+	{
+		return NodeSequence(
+				push(new TableCellNode()),
+				TestNot(tableNode.get().getColumns().size() == 0, Sp(), Optional(':'), Sp(), OneOrMore('-'), Sp(),
+						Optional(':'), Sp(), FirstOf('|', Newline())),
+				Optional(Sp(), TestNot('|'), NotNewline()),
+				OneOrMore(TestNot('|'), TestNot(Sp(), Newline()), Inline(), addAsChild(),
+						Optional(Sp(), Test('|'), Test(Newline()))), ZeroOrMore('|'),
+				((TableCellNode) peek()).setColSpan(Math.max(1, matchLength())));
+	}
 
     //************* SMARTS ****************
 
@@ -1415,11 +1401,11 @@ public class Parser extends BaseParser<Object> implements Extensions {
     }
 
     //************* HELPERS ****************
-    
+
     public Rule NOrMore(char c, int n) {
         return Sequence(repeat(c, n), ZeroOrMore(c));
     }
-    
+
     public Rule NodeSequence(Object... nodeRules) {
         return Sequence(
                 push(getContext().getCurrentIndex()),
@@ -1427,14 +1413,14 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 setIndices()
         );
     }
-    
+
     public boolean setIndices() {
         AbstractNode node = (AbstractNode) peek();
         node.setStartIndex((Integer)pop(1));
         node.setEndIndex(currentIndex());
         return true;
     }
-    
+
     public boolean addAsChild() {
         SuperNode parent = (SuperNode) peek(1);
         List<Node> children = parent.getChildren();
@@ -1453,7 +1439,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         children.add(child);
         return true;
     }
-    
+
     public Node popAsNode() {
         return (Node) pop();
     }
@@ -1465,12 +1451,12 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public boolean ext(int extension) {
         return (options & extension) > 0;
     }
-    
+
     // called for inner parses for list items and blockquotes
     public RootNode parseInternal(StringBuilderVar block) {
         char[] chars = block.getChars();
         int[] ixMap = new int[chars.length + 1]; // map of cleaned indices to original indices
-        
+
         // strip out CROSSED_OUT characters and build index map
         StringBuilder clean = new StringBuilder();
         for (int i = 0; i < chars.length; i++) {
@@ -1481,15 +1467,15 @@ public class Parser extends BaseParser<Object> implements Extensions {
             }
         }
         ixMap[clean.length()] = chars.length;
-        
+
         // run inner parse
         char[] cleaned = new char[clean.length()];
         clean.getChars(0, cleaned.length, cleaned, 0);
         RootNode rootNode = parseInternal(cleaned);
-        
+
         // correct AST indices with index map
         fixIndices(rootNode, ixMap);
-        
+
         return rootNode;
     }
 
@@ -1511,7 +1497,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         }
         return (RootNode) result.resultValue;
     }
-    
+
     ParsingResult<Node> parseToParsingResult(char[] source) {
         parsingStartTimeStamp = System.currentTimeMillis();
         return parseRunnerProvider.get(Root()).run(source);
